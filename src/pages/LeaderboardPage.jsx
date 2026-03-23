@@ -38,8 +38,11 @@ export default function LeaderboardPage({ onNav, user, profile }) {
   }, [user])
 
   useEffect(() => {
-    if (tab === 'global') fetchGlobal()
-    else fetchMine()
+    let t = setTimeout(() => {
+      if (tab === 'global') fetchGlobal()
+      else fetchMine()
+    }, 0)
+    return () => clearTimeout(t)
   }, [tab, fetchGlobal, fetchMine])
 
   return (
@@ -146,7 +149,6 @@ export default function LeaderboardPage({ onNav, user, profile }) {
             rank={i + 1}
             row={row}
             isMe={profile && row.username === profile.username}
-            tab={tab}
           />
         ))}
 
@@ -180,8 +182,7 @@ export default function LeaderboardPage({ onNav, user, profile }) {
   )
 }
 
-// ── Score Row ──────────────────────────────────────────────────
-function ScoreRow({ rank, row, isMe, tab }) {
+function ScoreRow({ rank, row, isMe }) {
   const rankColor = rank === 1
     ? '#FFE600' : rank === 2
     ? '#C0C0C0' : rank === 3
