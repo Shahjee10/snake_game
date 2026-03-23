@@ -2,8 +2,8 @@
 
 A fully **production-ready Snake game** built from scratch in just **48 hours** — no game libraries, no shortcuts.
 
-👉 Live Demo: (add your deployed link here)  
-👉 GitHub Repo: https://github.com/Shahjee10/snake_game  
+👉 Live Demo: https://snakegame-production-5e00.up.railway.app/  
+
 
 ---
 
@@ -125,7 +125,6 @@ Feel free to:
 
 ## 📬 Contact
 
-- GitHub: https://github.com/Shahjee10  
 - LinkedIn: https://www.linkedin.com/in/ahmed-shah-b4a458284  
 
 ---
