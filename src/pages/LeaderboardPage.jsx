@@ -38,8 +38,11 @@ export default function LeaderboardPage({ onNav, user, profile }) {
   }, [user])
 
   useEffect(() => {
-    if (tab === 'global') fetchGlobal()
-    else fetchMine()
+    let t = setTimeout(() => {
+      if (tab === 'global') fetchGlobal()
+      else fetchMine()
+    }, 0)
+    return () => clearTimeout(t)
   }, [tab, fetchGlobal, fetchMine])
 
   return (
