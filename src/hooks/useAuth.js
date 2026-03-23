@@ -6,73 +6,80 @@ export function useAuth() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Fetch profile row for a given user id
   const fetchProfile = useCallback(async (userId) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
+    if (error) console.error("fetchProfile error [RLS issue?]:", error)
     setProfile(data ?? null)
   }, [])
 
-  // On mount — restore session
   useEffect(() => {
+    // Restore session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
       setLoading(false)
     })
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
-      else setProfile(null)
+      else { setProfile(null) }
     })
 
     return () => subscription.unsubscribe()
   }, [fetchProfile])
 
-  // ── Sign Up ────────────────────────────────────────────────
   const signUp = useCallback(async (email, password, username) => {
-    // Check username taken
-    const { data: existing } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', username)
-      .single()
+  // Check username taken
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+    .single()
 
-    if (existing) return { error: { message: 'Username already taken' } }
+  if (existing) return { error: { message: 'Username already taken' } }
 
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) return { error }
+  // Sign up — trigger creates profile row automatically server-side
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { username }  // trigger reads this from raw_user_meta_data
+    }
+  })
 
-    // Create profile row
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({ id: data.user.id, username })
+  if (error) return { error }
 
-    if (profileError) return { error: profileError }
-    return { data }
-  }, [])
+  // Wait briefly for trigger to fire, then fetch profile
+  await new Promise(r => setTimeout(r, 500))
+  await fetchProfile(data.user.id)
 
-  // ── Sign In ────────────────────────────────────────────────
+  return { data }
+}, [fetchProfile])
+
   const signIn = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (!error && data.user) await fetchProfile(data.user.id)
     return { data, error }
-  }, [])
+  }, [fetchProfile])
 
-  // ── Sign Out ───────────────────────────────────────────────
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
   }, [])
 
-  // ── Save Score ─────────────────────────────────────────────
   const saveScore = useCallback(async (score, level) => {
     if (!user || !profile) return { error: { message: 'Not logged in' } }
     const { error } = await supabase
       .from('scores')
       .insert({ user_id: user.id, username: profile.username, score, level })
+    if (error) console.error("saveScore error [RLS issue?]:", error)
     return { error }
   }, [user, profile])
 

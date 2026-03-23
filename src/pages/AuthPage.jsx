@@ -1,16 +1,13 @@
 import { useState } from 'react'
-import { useAuth }  from '../hooks/useAuth'
 
-export default function AuthPage({ onNav }) {
-  const [mode, setMode]       = useState('login')   // 'login' | 'signup'
-  const [email, setEmail]     = useState('')
+export default function AuthPage({ onNav, user, profile, signIn, signUp, signOut }) {
+  const [mode, setMode]         = useState('login')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
-  const [error, setError]     = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(null)
-
-  const { signIn, signUp, user, profile, signOut } = useAuth()
+  const [error, setError]       = useState(null)
+  const [loading, setLoading]   = useState(false)
+  const [success, setSuccess]   = useState(null)
 
   const handleSubmit = async () => {
     setError(null)
@@ -25,13 +22,13 @@ export default function AuthPage({ onNav }) {
       if (password.length < 6) { setError('Password must be 6+ characters'); setLoading(false); return }
       const { error } = await signUp(email, password, username)
       if (error) setError(error.message)
-      else { setSuccess('Account created! You can now play.'); setTimeout(() => onNav('game'), 1200) }
+      else { setSuccess('Account created!'); setTimeout(() => onNav('game'), 1200) }
     }
 
     setLoading(false)
   }
 
-  // ── Already logged in view ─────────────────────────────────
+  // ── Already logged in ──────────────────────────────────────
   if (user && profile) {
     return (
       <PageShell onNav={onNav}>
@@ -42,7 +39,7 @@ export default function AuthPage({ onNav }) {
           </div>
           <div className="font-mono text-neon/30 text-xs">{user.email}</div>
           <button
-            onClick={signOut}
+            onClick={async () => { await signOut(); onNav('game') }}
             className="mt-4 font-retro text-[9px] px-6 py-3 border-2 border-neon-pink text-neon-pink hover:bg-neon-pink/10 transition-all tracking-widest"
             style={{ boxShadow: '0 0 10px #FF2D7844' }}
           >
@@ -56,7 +53,6 @@ export default function AuthPage({ onNav }) {
   // ── Auth form ──────────────────────────────────────────────
   return (
     <PageShell onNav={onNav}>
-      {/* Tab toggle */}
       <div className="flex w-full mb-6 border border-neon/20">
         {['login', 'signup'].map(m => (
           <button
@@ -74,31 +70,12 @@ export default function AuthPage({ onNav }) {
 
       <div className="flex flex-col gap-4 w-full">
         {mode === 'signup' && (
-          <Field
-            label="USERNAME"
-            value={username}
-            onChange={setUsername}
-            placeholder="player_one"
-            maxLength={20}
-          />
+          <Field label="USERNAME" value={username} onChange={setUsername} placeholder="player_one" maxLength={20} onSubmit={handleSubmit} />
         )}
-        <Field
-          label="EMAIL"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          placeholder="you@example.com"
-        />
-        <Field
-          label="PASSWORD"
-          type="password"
-          value={password}
-          onChange={setPassword}
-          placeholder="••••••••"
-        />
+        <Field label="EMAIL"    type="email"    value={email}    onChange={setEmail}    placeholder="you@example.com" onSubmit={handleSubmit} />
+        <Field label="PASSWORD" type="password" value={password} onChange={setPassword} placeholder="••••••••" onSubmit={handleSubmit} />
       </div>
 
-      {/* Error / success */}
       {error   && <div className="font-mono text-[10px] text-neon-pink mt-4 text-center">{error}</div>}
       {success && <div className="font-mono text-[10px] text-neon mt-4 text-center animate-pulse">{success}</div>}
 
@@ -116,16 +93,13 @@ export default function AuthPage({ onNav }) {
   )
 }
 
-// ── Sub-components ─────────────────────────────────────────────
-
 function PageShell({ children, onNav }) {
   return (
     <div className="flex flex-col items-center" style={{ minHeight: '100vh', justifyContent: 'center' }}>
       <div
         className="flex flex-col items-center w-full"
         style={{
-          width: 380,
-          padding: 32,
+          width: 380, padding: 32,
           background: '#0D1117',
           border: '2px solid #39FF14',
           boxShadow: '0 0 24px #39FF1433',
@@ -133,9 +107,7 @@ function PageShell({ children, onNav }) {
       >
         <div className="font-retro text-neon text-xl mb-1 tracking-widest animate-flicker">SNAKE</div>
         <div className="font-mono text-neon/30 text-[9px] mb-8 tracking-widest">PLAYER IDENTITY</div>
-
         {children}
-
         <button
           onClick={() => onNav('game')}
           className="mt-6 font-retro text-[9px] text-neon/30 hover:text-neon transition-colors tracking-widest"
@@ -147,7 +119,7 @@ function PageShell({ children, onNav }) {
   )
 }
 
-function Field({ label, type = 'text', value, onChange, placeholder, maxLength }) {
+function Field({ label, type = 'text', value, onChange, placeholder, maxLength, onSubmit }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="font-mono text-[9px] text-neon/50 tracking-widest">{label}</label>
@@ -157,9 +129,9 @@ function Field({ label, type = 'text', value, onChange, placeholder, maxLength }
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
-        onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+        onKeyDown={e => e.key === 'Enter' && onSubmit && onSubmit()}
         className="bg-dark-800 border border-neon/20 text-neon font-mono text-xs px-3 py-3
-          placeholder-neon/20 outline-none focus:border-neon/60 focus:shadow-neon
+          placeholder-neon/20 outline-none focus:border-neon/60
           transition-all tracking-wide"
       />
     </div>

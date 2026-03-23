@@ -61,3 +61,9 @@ body::after {
   70%  { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.95); }
 }
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
