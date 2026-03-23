@@ -19,7 +19,7 @@ export default function App() {
         />
       )}
       {page === 'auth'        && <AuthPage        onNav={setPage} />}
-      {page === 'leaderboard' && <LeaderboardPage onNav={setPage} />}
+      {page === 'leaderboard' && <LeaderboardPage onNav={setPage} user={user} profile={profile} />}
     </div>
   )
 }
