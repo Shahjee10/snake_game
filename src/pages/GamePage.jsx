@@ -84,7 +84,7 @@ export default function GamePage({ onNav, user, profile, saveScore, signOut }) {
       >
         <ScoreBoard
           score={gameState.score}
-          highScore={gameState.highScore}
+          highScore={Math.max(gameState.highScore, profile?.best_score || 0)}
           status={gameState.status}
           level={level}
         />

@@ -15,7 +15,11 @@ const KEY_MAP = {
 const sound = (fn) => { if (!isMuted()) fn() }
 
 export function useSnakeGame(onEat, onDie) {
-  const [gameState, setGameState] = useState(() => createInitialState())
+  const [gameState, setGameState] = useState(() => {
+    const init = createInitialState()
+    init.highScore = parseInt(localStorage.getItem('snakeHighScore') || '0', 10)
+    return init
+  })
   const stateRef   = useRef(gameState)
 
   useEffect(() => {
@@ -29,6 +33,10 @@ export function useSnakeGame(onEat, onDie) {
       sound(Sounds.eat)
       onEat?.()
       if (next.score % 50 === 0 && next.score > 0) sound(Sounds.levelUp)
+    }
+
+    if (next.highScore > stateRef.current.highScore) {
+      localStorage.setItem('snakeHighScore', next.highScore.toString())
     }
 
     if (next.status === 'dead') {
