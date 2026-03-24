@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { resetGuestHighScore } from './useSnakeGame'
 
 export function useAuth() {
   const [user,    setUser]    = useState(null)
@@ -73,7 +74,7 @@ export function useAuth() {
   // Wait briefly for trigger to fire, then fetch profile
   await new Promise(r => setTimeout(r, 500))
   setUser(data.user)
-  localStorage.removeItem('snakeHighScore')
+  resetGuestHighScore()
   await fetchProfile(data.user.id)
 
   return { data }
@@ -82,7 +83,7 @@ export function useAuth() {
   const signIn = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (!error && data.user) {
-      localStorage.removeItem('snakeHighScore')
+      resetGuestHighScore()
       await fetchProfile(data.user.id)
     }
     return { data, error }
@@ -92,7 +93,7 @@ export function useAuth() {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
-    localStorage.removeItem('snakeHighScore')
+    resetGuestHighScore()
   }, [])
 
   const saveScore = useCallback(async (score, level) => {
