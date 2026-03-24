@@ -7,13 +7,28 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId) => {
-    const { data, error } = await supabase
+    const { data: profileData, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
     if (error) console.error("fetchProfile error [RLS issue?]:", error)
-    setProfile(data ?? null)
+
+    // Fetch absolute best score mathematically from the server
+    const { data: scoreData } = await supabase
+      .from('scores')
+      .select('score')
+      .eq('user_id', userId)
+      .order('score', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (profileData) {
+      profileData.best_score = scoreData?.score || 0
+      setProfile(profileData)
+    } else {
+      setProfile(null)
+    }
   }, [])
 
   useEffect(() => {
@@ -57,6 +72,8 @@ export function useAuth() {
 
   // Wait briefly for trigger to fire, then fetch profile
   await new Promise(r => setTimeout(r, 500))
+  setUser(data.user)
+  localStorage.removeItem('snakeHighScore')
   await fetchProfile(data.user.id)
 
   return { data }
@@ -64,7 +81,10 @@ export function useAuth() {
 
   const signIn = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (!error && data.user) await fetchProfile(data.user.id)
+    if (!error && data.user) {
+      localStorage.removeItem('snakeHighScore')
+      await fetchProfile(data.user.id)
+    }
     return { data, error }
   }, [fetchProfile])
 
@@ -72,6 +92,7 @@ export function useAuth() {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    localStorage.removeItem('snakeHighScore')
   }, [])
 
   const saveScore = useCallback(async (score, level) => {
@@ -80,6 +101,11 @@ export function useAuth() {
       .from('scores')
       .insert({ user_id: user.id, username: profile.username, score, level })
     if (error) console.error("saveScore error [RLS issue?]:", error)
+    else {
+      if (score > (profile.best_score || 0)) {
+        setProfile(p => ({ ...p, best_score: score }))
+      }
+    }
     return { error }
   }, [user, profile])
 

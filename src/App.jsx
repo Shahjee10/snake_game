@@ -12,6 +12,7 @@ export default function App() {
     <div className="min-h-screen bg-dark-900 flex flex-col items-center justify-center">
       {page === 'game' && (
         <GamePage
+          key={auth.user ? auth.user.id : 'guest'}
           onNav={setPage}
           user={auth.user}
           profile={auth.profile}
