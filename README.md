@@ -107,7 +107,6 @@ npm run preview
 
 - Mobile touch controls 📱
 - Power-ups and obstacles ⚡
-- Multiplayer mode 🎮
 - Advanced animations & effects ✨
 
 ---
